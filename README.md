@@ -20,6 +20,7 @@ Au premier lancement, choisissez le dossier à analyser. Video Tag y crée `vide
 
 - **Mettre à jour la base** : ajoute les nouvelles vidéos du dossier. Titre, date, auteur, tags et revues déjà saisis ne sont jamais modifiés.
 - **Générer les planches manquantes** : utilise le script [planche-contact](https://github.com/charlescoiffier/planche-contact) (copie dans `vendor/`) pour créer `screen/<nom de la vidéo>.jpg`.
+- **Importer des tags d'un autre projet** : dans les réglages des tags, « Importer des tags… » copie les définitions (nom, touche, motif, étiquette) d'un autre dossier déjà ouvert dans Video Tag. Les tags du même nom sont ignorés, une touche ou une couleur déjà prise est retirée du tag importé, et rien n'est modifié dans l'autre dossier.
 - **Tags** : créez-les dans les réglages. Chaque tag a un nom, une touche du clavier (n'importe laquelle), une étiquette Finder facultative (7 couleurs, une par tag).
 - **Verrou** : le cadenas à côté des tags (écran principal) empêche de cocher ou décocher les tags, au clic comme au clavier.
 - **Clavier** : la touche d'un tag le coche / décoche sur la vidéo affichée ; ← → ↑ ↓ naviguent ; Espace ouvre l'aperçu macOS ; pincer zoome sur la planche.

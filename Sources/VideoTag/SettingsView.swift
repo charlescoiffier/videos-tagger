@@ -7,6 +7,9 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var original: [TagDef] = []
     @State private var pendingDelete: TagDef?
+    @State private var importItems: [TagImportItem]?
+    @State private var importSource = ""
+    @State private var importError: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -25,6 +28,9 @@ struct SettingsView: View {
 
             HStack {
                 Button("Ajouter un tag") { addTag() }.buttonStyle(GhostButtonStyle(accent: true))
+                Button("Importer des tags…") { chooseProject() }
+                    .buttonStyle(GhostButtonStyle())
+                    .help("Copie les définitions de tags d'un autre projet (un autre dossier ouvert dans Video Tag). Rien n'est modifié dans ce projet-là.")
                 Spacer()
                 Button("Fermer") { close() }
                     .buttonStyle(PrimaryPillStyle())
@@ -36,6 +42,16 @@ struct SettingsView: View {
         .frame(width: 720, height: 520)
         .interactiveDismissDisabled()
         .onAppear { original = state.config.tags }
+        .sheet(isPresented: Binding(get: { importItems != nil }, set: { if !$0 { importItems = nil } })) {
+            if let items = importItems {
+                ImportTagsSheet(sourceName: importSource, existing: state.config.tags, items: items,
+                                onImport: { state.config.tags = $0; importItems = nil },
+                                onCancel: { importItems = nil })
+            }
+        }
+        .alert("Import impossible", isPresented: Binding(get: { importError != nil }, set: { if !$0 { importError = nil } })) {
+            Button("OK") {}
+        } message: { Text(importError ?? "") }
         .confirmationDialog("Supprimer ce tag ?", isPresented: Binding(
             get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } })) {
             Button("Supprimer et retirer son étiquette", role: .destructive) {
@@ -125,6 +141,30 @@ struct SettingsView: View {
         }
         image.isTemplate = false
         return image
+    }
+
+    /// Choix d'un autre projet (dossier contenant un `config.json`), puis lecture seule de ses tags.
+    private func chooseProject() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = "Importer ses tags"
+        panel.message = "Choisissez un autre dossier de vidéos déjà ouvert dans Video Tag (il contient un fichier config.json)."
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        if let current = state.root, url.standardizedFileURL == current.standardizedFileURL {
+            importError = "C'est le dossier en cours : choisissez un autre projet."
+            return
+        }
+        do {
+            let incoming = try TagImport.load(from: url)
+            importSource = url.lastPathComponent
+            importItems = TagImport.plan(existing: state.config.tags, incoming: incoming)
+        } catch TagImportError.noTags {
+            importError = "Ce dossier n'a pas de tags à importer : il ne contient pas de config.json, ou celui-ci ne définit aucun tag."
+        } catch {
+            importError = "Lecture impossible : \(error.localizedDescription)"
+        }
     }
 
     private func addTag() {
